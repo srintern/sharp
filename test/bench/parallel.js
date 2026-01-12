@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 */
 
-process.env.UV_THREADPOOL_SIZE = 64;
+process.env.UV_THREADPOOL_SIZE = 4;
 
 const assert = require('node:assert');
 const async = require('async');
@@ -14,7 +14,7 @@ const fixtures = require('../fixtures');
 const width = 720;
 const height = 480;
 
-sharp.concurrency(1);
+sharp.concurrency(2);
 
 const timer = setInterval(() => {
   console.dir(sharp.counters());
@@ -24,7 +24,7 @@ async.mapSeries([1, 1, 2, 4, 8, 16, 32, 64], (parallelism, next) => {
   const start = Date.now();
   async.times(parallelism,
     (_id, callback) => {
-      sharp(fixtures.inputJpg).resize(width, height).toBuffer((err, buffer) => {
+      sharp(fixtures.inputJpg, { limitInputPixels: 67_108_864, sequentialRead: true }).rotate().resize(width, height).jpeg({ quality: 75, mozjpeg: true }).toBuffer((err, buffer) => {
         buffer = null;
         callback(err, Date.now() - start);
       });
